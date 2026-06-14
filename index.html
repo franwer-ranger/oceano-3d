@@ -155,6 +155,56 @@
     transition: opacity 0.45s ease;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   }
+
+  /* Botones flotantes (solo móvil) */
+  #mobile-controls {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #mobile-controls button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(5, 18, 32, 0.7);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  #mobile-controls button.activo {
+    background: rgba(30, 90, 140, 0.85);
+    border-color: rgba(160, 220, 255, 0.5);
+  }
+
+  /* Responsive: en pantallas pequeñas los paneles se ocultan tras los botones */
+  @media (max-width: 768px) {
+    #mobile-controls { display: flex; }
+    .lil-gui.root { --width: min(88vw, 320px); max-height: 82vh; overflow-y: auto; }
+    #titulo h1 { font-size: 17px; }
+    #catalogo {
+      top: 52px;
+      left: 10px;
+      width: min(72vw, 220px);
+      max-height: 62vh;
+    }
+    #hint {
+      white-space: normal;
+      max-width: 92vw;
+      text-align: center;
+      font-size: 12px;
+      bottom: 78px;
+    }
+  }
 </style>
 <script type="importmap">
 {
@@ -169,7 +219,11 @@
 <div id="titulo"><h1>🌊 Océano 3D</h1></div>
 <div id="aviso"></div>
 <div id="catalogo"></div>
-<div id="hint">Arrastra para orbitar &nbsp;·&nbsp; Rueda para zoom &nbsp;·&nbsp; Clic en el agua para crear ondas &nbsp;·&nbsp; Sumérgete bajando la cámara &nbsp;·&nbsp; Busca animales: algunos son raros &nbsp;·&nbsp; “H” panel &nbsp;·&nbsp; “C” catálogo</div>
+<div id="mobile-controls">
+  <button id="btn-catalogo" aria-label="Catálogo de fauna" title="Catálogo de fauna">📖</button>
+  <button id="btn-panel" aria-label="Ajustes" title="Ajustes">⚙️</button>
+</div>
+<div id="hint">Arrastra para orbitar &nbsp;·&nbsp; Rueda para zoom &nbsp;·&nbsp; Clic en el agua para crear ondas &nbsp;·&nbsp; Sumérgete bajando la cámara &nbsp;·&nbsp; Busca animales: algunos son raros &nbsp;·&nbsp; Botones ⚙️📖 (o teclas “H”/“C”)</div>
 <div id="fps"></div>
 <div id="underwater"></div>
 <div id="flash"></div>
@@ -1753,12 +1807,8 @@ renderer.domElement.addEventListener('pointerup', (e) => {
 });
 
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'h' || e.key === 'H') gui._hidden ? gui.show() : gui.hide();
-  if (e.key === 'c' || e.key === 'C') {
-    params.mostrarCatalogo = !params.mostrarCatalogo;
-    catalogoEl.style.display = params.mostrarCatalogo ? 'block' : 'none';
-    gui.controllersRecursive().forEach((ctrl) => ctrl.updateDisplay());
-  }
+  if (e.key === 'h' || e.key === 'H') showPanel(gui._hidden);
+  if (e.key === 'c' || e.key === 'C') showCatalogo(catalogoEl.style.display === 'none');
 });
 
 /* ============================================================
@@ -1868,9 +1918,7 @@ fVida.add(params, 'barco').name('Velero ⛵');
 fVida.add(params, 'faunaDensidad', 0, 2, 0.1).name('Densidad de fauna');
 fVida.add(params, 'aves', 0, 12, 1).name('Aves 🕊️');
 fVida.add(params, 'incluirRaros').name('Especies raras ⭐');
-fVida.add(params, 'mostrarCatalogo').name('Catálogo 📖 (C)').onChange((v) => {
-  catalogoEl.style.display = v ? 'block' : 'none';
-});
+fVida.add(params, 'mostrarCatalogo').name('Catálogo 📖 (C)').onChange((v) => showCatalogo(v));
 fVida.add(params, 'burbujas').name('Burbujas (buceo)');
 fVida.add(params, 'nubes', 0, 30, 1).name('Nubes').onFinishChange(() => { rebuildClouds(); updateSun(); });
 fVida.add(params, 'opacidadNubes', 0, 1, 0.05).name('Opacidad nubes').onChange(() => {
@@ -1889,6 +1937,44 @@ fRender.add(params, 'mostrarFPS').name('Mostrar FPS').onChange((v) => {
 
 fOlas.open();
 fCielo.open();
+
+/* ============================================================
+   Controles responsive — botones flotantes (móvil) y sincronía
+============================================================ */
+const btnPanel = document.getElementById('btn-panel');
+const btnCatalogo = document.getElementById('btn-catalogo');
+const mqMobile = window.matchMedia('(max-width: 768px)');
+
+function showPanel(v) {
+  v ? gui.show() : gui.hide();
+  btnPanel.classList.toggle('activo', v);
+}
+function showCatalogo(v) {
+  params.mostrarCatalogo = v;
+  catalogoEl.style.display = v ? 'block' : 'none';
+  btnCatalogo.classList.toggle('activo', v);
+  gui.controllersRecursive().forEach((ctrl) => ctrl.updateDisplay());
+}
+
+btnPanel.addEventListener('click', () => {
+  const v = gui._hidden;            // si está oculto, mostrarlo
+  showPanel(v);
+  if (v && mqMobile.matches) showCatalogo(false); // en móvil, un panel a la vez
+});
+btnCatalogo.addEventListener('click', () => {
+  const v = catalogoEl.style.display === 'none';
+  showCatalogo(v);
+  if (v && mqMobile.matches) showPanel(false);
+});
+
+// En móvil ambos paneles ocultos por defecto; en desktop, visibles
+if (mqMobile.matches) {
+  showPanel(false);
+  showCatalogo(false);
+} else {
+  btnPanel.classList.add('activo');
+  btnCatalogo.classList.add('activo');
+}
 
 /* ============================================================
    Bucle principal
