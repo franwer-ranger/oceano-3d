@@ -378,10 +378,10 @@
     <p class="gc-msg">Muchas felicidades Paula, espero que estés teniendo un día maravilloso.</p>
     <div class="gc-voucher">
       <span class="gc-vtag">🏨 Tarjeta regalo</span>
-      <span class="gc-vbig">Esta tarjeta vale por 2 noches en un hotel que seguro te va a encantar.</span>
+      <span class="gc-vbig">Esta tarjeta vale por 2 noches en un hotel.</span>
     </div>
     <p class="gc-msg gc-love">Te quiero mucho guapetona ❤️.</p>
-    <div class="gc-sign">— Con todo mi cariño</div>
+    <div class="gc-sign">— Con cariño, Fran</div>
   </div>
 </div>
 
@@ -1190,7 +1190,7 @@ gift.visible = false;
 scene.add(gift);
 
 let giftState = 'hidden';      // hidden → appearing → idle → opening → open
-const GIFT_DELAY = 5;          // segundos antes de que aparezca
+const GIFT_DELAY = 3.5;        // segundos (desde que se activa el cumpleaños) antes de aparecer
 const GIFT_SIZE = 2.6;
 let giftAppearT = 0;
 let giftOpenT = 0;
@@ -1198,6 +1198,34 @@ let giftX = 0, giftZ = 0;
 const giftBobPhase = Math.random() * Math.PI * 2;
 let lidPivot, giftGlow;
 const giftClickTargets = [];
+
+// El regalo y la decoración de cumpleaños solo existen en el preset "25 de junio"
+let birthdayMode = false;
+let birthdayT = 0;
+
+// Globo reutilizable (cuerpo en forma de gota + nudo + cuerda)
+function makeBalloon(color, stringLen = 4) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.0 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), mat);
+  body.scale.set(1, 1.22, 1);
+  g.add(body);
+  const knot = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 8), mat);
+  knot.position.y = -1.18;
+  g.add(knot);
+  const pts = [];
+  const segs = 8;
+  for (let s = 0; s <= segs; s++) {
+    const f = s / segs;
+    pts.push(new THREE.Vector3(Math.sin(f * 5) * 0.1, -1.35 - f * stringLen, 0));
+  }
+  const str = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.4 })
+  );
+  g.add(str);
+  return g;
+}
 
 function buildGift() {
   const s = GIFT_SIZE;
@@ -1266,6 +1294,19 @@ function buildGift() {
     bow.add(tail);
   }
 
+  // Un pequeño ramillete de globos atados al regalo (suben sobre la caja)
+  const tied = [
+    { c: '#e8455f', x: -s * 0.5, z: -s * 0.2, y: bodyH + 3.0 },
+    { c: '#f6c945', x:  s * 0.05, z:  s * 0.15, y: bodyH + 3.7 },
+    { c: '#ff7eb3', x:  s * 0.55, z: -s * 0.1, y: bodyH + 3.1 },
+  ];
+  for (const b of tied) {
+    const balloon = makeBalloon(b.c, b.y - bodyH * 0.5);
+    balloon.scale.setScalar(0.62);
+    balloon.position.set(b.x, b.y, b.z);
+    gift.add(balloon);
+  }
+
   // Resplandor suave para indicar que es interactiva
   const glowMat = new THREE.SpriteMaterial({
     map: makeGlowTexture(),
@@ -1295,6 +1336,66 @@ function makeGlowTexture() {
   return new THREE.CanvasTexture(c);
 }
 buildGift();
+
+/* ------ Globos de cumpleaños flotando en el ambiente ------ */
+const balloonGroup = new THREE.Group();
+balloonGroup.visible = false;
+scene.add(balloonGroup);
+const balloonData = [];
+
+function buildBalloons() {
+  const colors = ['#e8455f', '#f6c945', '#ff7eb3', '#36c5c0', '#9b6dff', '#ff8c42'];
+  const N = 6;
+  for (let i = 0; i < N; i++) {
+    const balloon = makeBalloon(colors[i % colors.length], rand(3.5, 5.5));
+    balloon.scale.setScalar(rand(1.3, 2.0));
+    const ang = (i / N) * Math.PI * 2 + rand(-0.25, 0.25);
+    const radius = rand(28, 46);
+    const baseY = rand(10, 20);
+    balloon.position.set(Math.cos(ang) * radius, baseY, Math.sin(ang) * radius);
+    balloonGroup.add(balloon);
+    balloonData.push({
+      mesh: balloon,
+      phase: rand(0, Math.PI * 2),
+      baseY,
+      sway: rand(0.4, 0.9),
+      bob: rand(0.35, 0.7),
+      amp: rand(0.8, 1.6),
+    });
+  }
+}
+buildBalloons();
+
+function updateBalloons(t) {
+  if (!balloonGroup.visible) return;
+  for (const b of balloonData) {
+    b.mesh.position.y = b.baseY + Math.sin(t * b.bob + b.phase) * b.amp;
+    b.mesh.rotation.z = Math.sin(t * b.sway + b.phase) * 0.13;
+    b.mesh.rotation.y = Math.sin(t * 0.3 + b.phase) * 0.35;
+  }
+}
+
+/* ------ Activación / reinicio del modo cumpleaños ------ */
+function resetGift() {
+  giftState = 'hidden';
+  gift.visible = false;
+  gift.scale.setScalar(1);
+  gift.rotation.set(0, 0, 0);
+  if (lidPivot) lidPivot.rotation.x = 0;
+  if (giftGlow) giftGlow.material.opacity = 0;
+  gift.userData.cardShown = false;
+  hideGiftCard();
+}
+
+function setBirthdayMode(on) {
+  birthdayMode = on;
+  balloonGroup.visible = on;
+  if (on) {
+    birthdayT = 0;
+  } else {
+    resetGift();
+  }
+}
 
 function spawnGift() {
   // Aparece junto al barco, ligeramente hacia el centro para quedar a la vista
@@ -1330,7 +1431,10 @@ function openGift() {
 
 function updateGift(t, dt) {
   if (giftState === 'hidden') {
-    if (t > GIFT_DELAY && boat.visible) spawnGift();
+    if (birthdayMode && boat.visible) {
+      birthdayT += dt;
+      if (birthdayT > GIFT_DELAY) spawnGift();
+    }
     return;
   }
 
@@ -2246,6 +2350,15 @@ const presets = {
     niebla: 0.0012, lluvia: false, relampagos: false, viento: 0.4,
     nubes: 10, opacidadNubes: 0.45,
   },
+  // Cumpleaños: atardecer dorado con mar en calma y ambiente relajado.
+  // Es el único preset con caja regalo y globos.
+  '25 de junio': {
+    alturaOlas: 0.5, longitudOlas: 1.35, velocidad: 0.65, picado: 0.65, espuma: 0.38,
+    colorProfundo: '#143a5e', colorSuperficial: '#2f86a0', opacidad: 0.93, reflejo: 1.0, brilloSolar: 1.6,
+    elevacion: 8, azimut: 250, turbidez: 7, rayleigh: 2.6,
+    niebla: 0.0009, lluvia: false, relampagos: false, viento: 0.4,
+    nubes: 10, opacidadNubes: 0.55,
+  },
 };
 
 function applyPreset(name) {
@@ -2257,6 +2370,7 @@ function applyPreset(name) {
   updateSun();
   rebuildClouds();
   updateSun(); // re-tinta las nubes recién creadas
+  setBirthdayMode(name === '25 de junio'); // el regalo y los globos solo aquí
   gui.controllersRecursive().forEach((c) => c.updateDisplay());
 }
 
@@ -2430,6 +2544,7 @@ function animate() {
 
   updateBoat(dt, t);
   updateGift(t, dt);
+  updateBalloons(t);
   updateFauna(t, dt);
   updateBubbles(dt);
   updateRain(dt);
