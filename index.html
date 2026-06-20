@@ -205,6 +205,147 @@
       bottom: 78px;
     }
   }
+
+  /* ====== Tarjeta de regalo ====== */
+  #gift-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(3, 10, 22, 0.55);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  #gift-overlay.visible { opacity: 1; }
+
+  #gift-card {
+    position: relative;
+    width: min(460px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 34px 30px 30px;
+    border-radius: 20px;
+    text-align: center;
+    color: #4a2b1e;
+    background:
+      radial-gradient(circle at 50% -10%, rgba(255, 240, 245, 0.9), transparent 60%),
+      linear-gradient(160deg, #fff9f0 0%, #fdeede 55%, #f8e2cf 100%);
+    border: 2px solid rgba(212, 175, 95, 0.9);
+    box-shadow:
+      0 0 0 6px rgba(255, 255, 255, 0.35),
+      0 24px 70px rgba(0, 0, 0, 0.55),
+      inset 0 0 40px rgba(212, 175, 95, 0.18);
+    transform: translateY(24px) scale(0.92);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+  }
+  #gift-overlay.visible #gift-card {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  #gift-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 95, 0.6);
+    background: rgba(255, 255, 255, 0.5);
+    color: #8a5a32;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  #gift-close:hover { background: rgba(255, 255, 255, 0.95); transform: rotate(90deg); }
+
+  #gift-card .gc-emoji {
+    font-size: 46px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+    animation: gcFloat 3.2s ease-in-out infinite;
+  }
+  @keyframes gcFloat {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-7px) rotate(4deg); }
+  }
+
+  #gift-card h2 {
+    margin: 14px 0 4px;
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #b03a4e;
+    letter-spacing: 0.4px;
+  }
+  #gift-card .gc-rule {
+    width: 70%;
+    height: 1px;
+    margin: 10px auto 18px;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 95, 0.85), transparent);
+  }
+  #gift-card .gc-msg {
+    margin: 0 0 16px;
+    font-family: "Georgia", "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.6;
+    color: #5a3a2a;
+  }
+  #gift-card .gc-voucher {
+    margin: 4px auto 18px;
+    padding: 16px 18px;
+    border: 2px dashed rgba(176, 58, 78, 0.55);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    font-family: "Georgia", "Times New Roman", serif;
+  }
+  #gift-card .gc-voucher .gc-vtag {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #a8763a;
+    margin-bottom: 6px;
+  }
+  #gift-card .gc-voucher .gc-vbig {
+    font-size: 20px;
+    font-weight: 700;
+    color: #b03a4e;
+  }
+  #gift-card .gc-love {
+    font-size: 19px;
+    font-weight: 700;
+    color: #c0152f;
+  }
+  #gift-card .gc-sign {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #9a7242;
+    letter-spacing: 0.5px;
+  }
+
+  /* Corazones que flotan al abrir la tarjeta */
+  .gc-heart {
+    position: fixed;
+    bottom: -40px;
+    font-size: 22px;
+    pointer-events: none;
+    z-index: 51;
+    animation: gcRise linear forwards;
+    will-change: transform, opacity;
+  }
+  @keyframes gcRise {
+    0% { transform: translateY(0) scale(0.7); opacity: 0; }
+    12% { opacity: 1; }
+    100% { transform: translateY(-105vh) scale(1.15) rotate(var(--rot, 25deg)); opacity: 0; }
+  }
 </style>
 <script type="importmap">
 {
@@ -227,6 +368,22 @@
 <div id="fps"></div>
 <div id="underwater"></div>
 <div id="flash"></div>
+
+<div id="gift-overlay">
+  <div id="gift-card">
+    <button id="gift-close" aria-label="Cerrar">✕</button>
+    <div class="gc-emoji">🎁</div>
+    <h2>Para Paula</h2>
+    <div class="gc-rule"></div>
+    <p class="gc-msg">Muchas felicidades Paula, espero que estés teniendo un día maravilloso.</p>
+    <div class="gc-voucher">
+      <span class="gc-vtag">🏨 Tarjeta regalo</span>
+      <span class="gc-vbig">Esta tarjeta vale por 2 noches en un hotel que seguro te va a encantar.</span>
+    </div>
+    <p class="gc-msg gc-love">Te quiero mucho guapetona ❤️.</p>
+    <div class="gc-sign">— Con todo mi cariño</div>
+  </div>
+</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -1025,6 +1182,236 @@ function updateBoat(dt, t) {
 }
 
 /* ============================================================
+   Caja regalo — aparece cerca del barco; al pulsarla se abre
+   y muestra una tarjeta de regalo
+============================================================ */
+const gift = new THREE.Group();
+gift.visible = false;
+scene.add(gift);
+
+let giftState = 'hidden';      // hidden → appearing → idle → opening → open
+const GIFT_DELAY = 5;          // segundos antes de que aparezca
+const GIFT_SIZE = 2.6;
+let giftAppearT = 0;
+let giftOpenT = 0;
+let giftX = 0, giftZ = 0;
+const giftBobPhase = Math.random() * Math.PI * 2;
+let lidPivot, giftGlow;
+const giftClickTargets = [];
+
+function buildGift() {
+  const s = GIFT_SIZE;
+  const bodyH = s * 0.78;
+
+  const boxMat    = new THREE.MeshStandardMaterial({ color: '#c0152f', roughness: 0.45, metalness: 0.12 });
+  const lidMat    = new THREE.MeshStandardMaterial({ color: '#d4203f', roughness: 0.4,  metalness: 0.14 });
+  const ribbonMat = new THREE.MeshStandardMaterial({ color: '#f6c945', roughness: 0.28, metalness: 0.65, emissive: '#5a3d00', emissiveIntensity: 0.25 });
+
+  // Cuerpo de la caja
+  const base = new THREE.Mesh(new THREE.BoxGeometry(s, bodyH, s), boxMat);
+  base.position.y = bodyH / 2;
+  gift.add(base);
+  giftClickTargets.push(base);
+
+  // Cintas doradas que envuelven el cuerpo
+  const rW = s * 0.16;
+  const ribX = new THREE.Mesh(new THREE.BoxGeometry(rW, bodyH + 0.02, s + 0.03), ribbonMat);
+  ribX.position.y = bodyH / 2;
+  gift.add(ribX);
+  giftClickTargets.push(ribX);
+  const ribZ = new THREE.Mesh(new THREE.BoxGeometry(s + 0.03, bodyH + 0.02, rW), ribbonMat);
+  ribZ.position.y = bodyH / 2;
+  gift.add(ribZ);
+  giftClickTargets.push(ribZ);
+
+  // Tapa con bisagra en el borde trasero (para abrirse girando)
+  lidPivot = new THREE.Group();
+  lidPivot.position.set(0, bodyH, -s / 2);
+  gift.add(lidPivot);
+
+  const lidH = s * 0.24;
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(s * 1.1, lidH, s * 1.1), lidMat);
+  lid.position.set(0, lidH / 2, s / 2);
+  lidPivot.add(lid);
+  giftClickTargets.push(lid);
+
+  // Cintas sobre la tapa
+  const lribX = new THREE.Mesh(new THREE.BoxGeometry(rW, lidH + 0.03, s * 1.1 + 0.03), ribbonMat);
+  lribX.position.set(0, lidH / 2, s / 2);
+  lidPivot.add(lribX);
+  const lribZ = new THREE.Mesh(new THREE.BoxGeometry(s * 1.1 + 0.03, lidH + 0.03, rW), ribbonMat);
+  lribZ.position.set(0, lidH / 2, s / 2);
+  lidPivot.add(lribZ);
+
+  // Lazo sobre la tapa: dos bucles + nudo + dos cintas colgantes
+  const bow = new THREE.Group();
+  bow.position.set(0, lidH, s / 2);
+  lidPivot.add(bow);
+
+  const loopGeo = new THREE.TorusGeometry(s * 0.2, s * 0.055, 12, 28);
+  for (const sign of [-1, 1]) {
+    const loop = new THREE.Mesh(loopGeo, ribbonMat);
+    loop.scale.set(1, 0.72, 0.55);
+    loop.rotation.z = sign * 0.62;
+    loop.position.set(sign * s * 0.2, s * 0.16, 0);
+    bow.add(loop);
+  }
+  const knot = new THREE.Mesh(new THREE.SphereGeometry(s * 0.11, 16, 12), ribbonMat);
+  knot.position.y = s * 0.06;
+  bow.add(knot);
+  for (const sign of [-1, 1]) {
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(s * 0.1, s * 0.34, 0.03), ribbonMat);
+    tail.position.set(sign * s * 0.12, -s * 0.12, 0);
+    tail.rotation.z = sign * 0.5;
+    bow.add(tail);
+  }
+
+  // Resplandor suave para indicar que es interactiva
+  const glowMat = new THREE.SpriteMaterial({
+    map: makeGlowTexture(),
+    color: '#ffd66b',
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    fog: false,
+  });
+  giftGlow = new THREE.Sprite(glowMat);
+  giftGlow.scale.setScalar(s * 3.2);
+  giftGlow.position.y = bodyH * 0.6;
+  gift.add(giftGlow);
+}
+
+function makeGlowTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,240,200,0.9)');
+  g.addColorStop(0.4, 'rgba(255,210,120,0.35)');
+  g.addColorStop(1, 'rgba(255,210,120,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+buildGift();
+
+function spawnGift() {
+  // Aparece junto al barco, ligeramente hacia el centro para quedar a la vista
+  const bx = boat.position.x, bz = boat.position.z;
+  const len = Math.hypot(bx, bz) || 1;
+  giftX = bx - (bx / len) * 8;
+  giftZ = bz - (bz / len) * 8;
+  gift.position.set(giftX, waveY(giftX, giftZ), giftZ);
+  gift.visible = true;
+  giftState = 'appearing';
+  giftAppearT = 0;
+  giftMsg('🎁 ¡Ha aparecido un regalo cerca del barco! Púlsalo…');
+}
+
+let giftMsgTimer = null;
+function giftMsg(html) {
+  const el = document.getElementById('aviso');
+  el.innerHTML = html;
+  el.style.opacity = '1';
+  clearTimeout(giftMsgTimer);
+  giftMsgTimer = setTimeout(() => { el.style.opacity = '0'; }, 4000);
+}
+
+function openGift() {
+  if (giftState === 'idle') {
+    giftState = 'opening';
+    giftOpenT = 0;
+    spawnHearts();
+  } else if (giftState === 'open') {
+    showGiftCard();
+  }
+}
+
+function updateGift(t, dt) {
+  if (giftState === 'hidden') {
+    if (t > GIFT_DELAY && boat.visible) spawnGift();
+    return;
+  }
+
+  // Flota sobre las olas con un balanceo suave
+  const surfaceY = waveY(giftX, giftZ);
+  const bob = Math.sin(t * 1.3 + giftBobPhase) * 0.12;
+  gift.position.x = giftX;
+  gift.position.z = giftZ;
+  gift.rotation.z = Math.sin(t * 0.9 + giftBobPhase) * 0.05;
+  gift.rotation.x = Math.cos(t * 0.8 + giftBobPhase) * 0.04;
+
+  if (giftState === 'appearing') {
+    giftAppearT += dt;
+    const k = clamp(giftAppearT / 0.9, 0, 1);
+    const ease = 1 - Math.pow(1 - k, 3);
+    const overshoot = Math.sin(k * Math.PI) * 0.12;
+    gift.scale.setScalar(ease + overshoot);
+    gift.position.y = surfaceY + bob + (1 - ease) * 1.5;
+    if (k >= 1) { gift.scale.setScalar(1); giftState = 'idle'; }
+    return;
+  }
+
+  gift.position.y = surfaceY + bob;
+  gift.rotation.y += dt * 0.35;
+
+  if (giftState === 'idle') {
+    // Brillo y latido sutil para invitar a pulsar
+    giftGlow.material.opacity = 0.45 + 0.25 * Math.sin(t * 2.2);
+    const pulse = 1 + Math.sin(t * 2.2) * 0.025;
+    gift.scale.setScalar(pulse);
+  } else if (giftState === 'opening') {
+    giftOpenT += dt;
+    const k = clamp(giftOpenT / 1.0, 0, 1);
+    const ease = 1 - Math.pow(1 - k, 3);
+    lidPivot.rotation.x = -ease * 2.3;        // la tapa se abre girando hacia atrás
+    giftGlow.material.opacity = 0.6 + 0.4 * ease;
+    giftGlow.scale.setScalar(GIFT_SIZE * (3.2 + ease * 1.6));
+    gift.scale.setScalar(1);
+    if (k > 0.55 && giftState === 'opening' && !gift.userData.cardShown) {
+      gift.userData.cardShown = true;
+      showGiftCard();
+    }
+    if (k >= 1) giftState = 'open';
+  } else if (giftState === 'open') {
+    giftGlow.material.opacity = 0.3 + 0.15 * Math.sin(t * 1.8);
+  }
+}
+
+/* Tarjeta de regalo (overlay HTML) */
+const giftOverlay = document.getElementById('gift-overlay');
+const giftCloseBtn = document.getElementById('gift-close');
+
+function showGiftCard() {
+  giftOverlay.style.display = 'flex';
+  requestAnimationFrame(() => giftOverlay.classList.add('visible'));
+  spawnHearts();
+}
+function hideGiftCard() {
+  giftOverlay.classList.remove('visible');
+  setTimeout(() => { giftOverlay.style.display = 'none'; }, 500);
+}
+giftCloseBtn.addEventListener('click', hideGiftCard);
+giftOverlay.addEventListener('click', (e) => { if (e.target === giftOverlay) hideGiftCard(); });
+
+function spawnHearts() {
+  const emojis = ['❤️', '💕', '✨', '🎉', '💛'];
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('div');
+    h.className = 'gc-heart';
+    h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    h.style.left = rand(2, 96) + 'vw';
+    h.style.fontSize = rand(16, 32) + 'px';
+    h.style.animationDuration = rand(3.2, 5.5) + 's';
+    h.style.animationDelay = rand(0, 0.8) + 's';
+    h.style.setProperty('--rot', rand(-40, 40) + 'deg');
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), 6500);
+  }
+}
+
+/* ============================================================
    Fauna — criaturas con rarezas, aparición/desaparición y catálogo
    Convención: cada criatura mira hacia +Z (rumbo = rotation.y)
 ============================================================ */
@@ -1795,6 +2182,15 @@ renderer.domElement.addEventListener('pointerup', (e) => {
   if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return; // fue un arrastre
   ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
+
+  // ¿Han pulsado la caja regalo? → se abre (tiene prioridad sobre la onda)
+  if (gift.visible && (giftState === 'idle' || giftState === 'open')) {
+    if (raycaster.intersectObjects(giftClickTargets, false).length) {
+      openGift();
+      return;
+    }
+  }
+
   const o = raycaster.ray.origin;
   const d = raycaster.ray.direction;
   if (Math.abs(d.y) < 1e-4) return;
@@ -2033,6 +2429,7 @@ function animate() {
   }
 
   updateBoat(dt, t);
+  updateGift(t, dt);
   updateFauna(t, dt);
   updateBubbles(dt);
   updateRain(dt);
